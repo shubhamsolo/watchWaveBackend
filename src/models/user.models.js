@@ -44,8 +44,13 @@ const userSchema = new Schema(
         },
         refreshToken: {
             type: String
-        }
+        },    
+        // Tweet:{
+        //     type:mongoose.Schema.Types.ObjectId,
+        //     ref:"Tweet"
+        // }
     },
+    
     {
         timestamps: true
     }

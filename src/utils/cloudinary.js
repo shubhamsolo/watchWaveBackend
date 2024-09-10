@@ -10,40 +10,46 @@ cloudinary.config({
 
 const uploadOnCloudinary = async (localFilePath) => {
   try {
-    // If no file path is provided, return null
-    if (!localFilePath) return null;
+    if (!localFilePath) return null; // If no file path is provided, return null
 
     // Upload the file to Cloudinary
     const response = await cloudinary.uploader.upload(localFilePath, {
-      resource_type: 'auto', // Automatically detect the file type
+      resource_type: 'video', // Ensure the resource type is set to 'video'
     });
 
-    // If the file was uploaded successfully, check if the local file exists
+    // Log the response for debugging purposes
+    console.log('Cloudinary upload response:', response);
+
+    // Generate a thumbnail URL from the uploaded video
+    const thumbnailUrl = cloudinary.url(`${response.public_id}.jpg`, {
+      transformation: [
+        { width: 200, height: 200, crop: 'limit' }, // Thumbnail size
+      ],
+      resource_type: 'video', // Ensure resource_type is set to 'video'
+      secure: true, // Use HTTPS for the URL
+    });
+
+    console.log('Thumbnail URL:', thumbnailUrl); // Log the thumbnail URL
+
+    // Check if the local file exists before attempting to delete it
     if (fs.existsSync(localFilePath)) {
-      // If it exists, delete the local file to free up space
-      fs.unlinkSync(localFilePath);
+      fs.unlinkSync(localFilePath); // Delete the local file to free up space
     } else {
-      // Log a warning if the file was not found
-      console.warn(`File not found: ${localFilePath}`);
+      console.warn(`File not found: ${localFilePath}`); // Log a warning if the file was not found
     }
 
-    // Return the Cloudinary response which contains details about the uploaded file
-    return response;
-
+    return { response, thumbnailUrl }; // Return the Cloudinary response and thumbnail URL
   } catch (error) {
-    // In case of an error during the upload process, check if the local file exists
+    // Check if the local file exists before attempting to delete it
     if (fs.existsSync(localFilePath)) {
-      // If it exists, delete the local file to clean up
-      fs.unlinkSync(localFilePath);
+      fs.unlinkSync(localFilePath); // Delete the local file to clean up
     } else {
-      // Log a warning if the file was not found
-      console.warn(`File not found: ${localFilePath}`);
+      console.warn(`File not found: ${localFilePath}`); // Log a warning if the file was not found
     }
 
     // Log the error that occurred during the upload process
     console.error('Error uploading to Cloudinary:', error);
-    // Return null to indicate the upload failed
-    return null;
+    return null; // Return null to indicate the upload failed
   }
 };
 

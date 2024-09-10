@@ -7,10 +7,7 @@ import userRouter from "./routes/user.routes.js";
 const app = express();
 
 // CORS configuration
-app.use(cors({
-    origin: process.env.CORS_ORIGIN,
-    credentials: true
-}));
+app.use(cors());
 
 // Middleware to parse JSON and URL-encoded data
 app.use(express.json({ limit: "16kb" }));

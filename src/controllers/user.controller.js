@@ -5,6 +5,8 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt  from "jsonwebtoken";
 import mongoose from "mongoose";
+import { Video } from "../models/video.models.js";
+
 
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
@@ -36,6 +38,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     const avatarLocalPath = req.files?.avatar?.[0]?.path;
     let coverImageLocalPath = req.files?.coverImage?.[0]?.path;
+
 
     if (!avatarLocalPath) {
         throw new ApiError(400, "Avatar file is required");
@@ -431,11 +434,98 @@ const getWatchHistory =asyncHandler(async(req,res)=>{
 })
 
 
-// const videoUpload =asyncHandler(async(req,res)=>{
+const videoUpload = asyncHandler(async (req, res) => {
+    try {
+      // Log the req.file object for debugging
+    //   console.log('Uploaded file:', req.file);
+  
+      // Ensure the file path is correctly extracted
+      const file = req.file?.path;
+    //   console.log('File path:', file);
+  
+      if (!file) {
+        throw new ApiError(400, 'No video file uploaded');
+      }
+  
+      // Upload the video to Cloudinary
+      const video= await uploadOnCloudinary(file);
+      console.log('Cloudinary upload response:', video);
+  
+      if (!video) {
+        throw new ApiError(401, 'Video upload failed');
+      }
+  
+      // Extract details from the request body
+      const { title, description, isPublished = true, owner} = req.body;
+      const views = 0; // Initialize views to 0 for a new video
+  
+      // Create the video details
+      const videoDetails = await Video.create({
+        videoFile:video.response.secure_url,
+        thumbnail:video.thumbnailUrl,
+        title,
+        description,
+        duration:video.response.duration,
+        views,
+        isPublished,
+        owner,
+      });
+  
+      return res.status(200).json(
+        new ApiResponse(200, videoDetails, 'Video uploaded successfully')
+      );
+    } catch (error) {
+      console.error('Error:', error);
+      return res.status(500).json(
+        new ApiError(500, error?.message || 'Video not uploaded')
+      );
+    }
+  });
 
-//     //
+  const getAllUserVideos = asyncHandler(async (req, res) => {
+    try {
+      // Log the entire request object to debug
+      console.log('Request Params:', req.params);
+      console.log('Request URL:', req.url);
+  
+      const { owner } = req.params;
+  
+      if (!owner) {
+        return res.status(400).json(new ApiError(400, 'Owner parameter is missing'));
+      }
+  
+      // Use find to get all videos by owner
+      const allVideos = await Video.find({ owner: owner })
+        // Uncomment if you need to populate related fields, e.g., `owner`
+        // .populate('owner', 'name') 
+        .exec();
+  
+      return res.status(200).json(new ApiResponse(200, allVideos, 'Get all videos successfully'));
+    } catch (error) {
+      console.error(`Error fetching videos: ${error.message}`);
+      return res.status(500).json(new ApiError(500, error?.message || 'Internal server error'));
+    }
+  });
 
-// })
+
+
+  const getAllVideo =asyncHandler(async(req,res)=>{
+
+    try {
+
+        const allVideos =await Video.find()
+
+        return res.status(200).json(new ApiResponse(200,allVideos,'get all videos successfully'));
+        
+    } catch (error) {
+
+        return res.status(500).json(new ApiError(500,error?.message||'Internal server error'))
+        
+    }
+
+  })
+  
+
 
     
 
@@ -452,5 +542,8 @@ export {
     updateUserAvatar,
     updateUserCoverImage,
     getUserChannelProfile,
-    getWatchHistory
+    getWatchHistory,
+    videoUpload,
+    getAllUserVideos,
+    getAllVideo
 };
