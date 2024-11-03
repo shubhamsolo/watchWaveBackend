@@ -9,7 +9,7 @@ const app = express();
 // CORS configuration
 app.use(cors({
   origin: ["https://gleeful-sawine-4b61b7.netlify.app"], // Replace with your specific origin
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allowing OPTIONS for preflight
+  methods: ["GET", "POST"], // Allowing OPTIONS for preflight
   credentials: true // Allows cookies and credentials
 }));
 // Middleware to parse JSON and URL-encoded data
